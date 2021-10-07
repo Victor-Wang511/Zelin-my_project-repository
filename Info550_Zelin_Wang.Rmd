@@ -1,0 +1,58 @@
+---
+  title: "Info550hw2_Zelin Wang"
+author: "Zelin Wang"
+date: "2021/9/22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The cohort consists of patients who initially pick up from the clinic pharmacy from January 2016 to June 2020 for one-year follow up.
+We seek to assess the association of the outcome of interest which is viral load undetectability (defined as viral load less than 200 copies/mL) and various variables: pharmacy antiretroviral(ART) pickup frequency at the clinic, age, sex, race, Cd4 and viral load count at initiation of ART, year of ART initial pick up at the clinic. 
+Using R markdown, I will clean, sort, code the provided deidentified data set  for analysis 
+Association between variables and outcome of interest will be assessed using chi square test  for categorical variables and t-test for continuous variable .
+A multivariate model using proc logistic will be used to derive the final model of association between significant variables and the outcome of interest. 
+
+
+#Read in the HIV pharmacy pickup data file and print.
+```{r}
+pickup<-read.csv(file='C:/Users/76325/Desktop/INFO 550/HW/hiv_pickup.csv',header = TRUE, stringsAsFactors = FALSE)
+print(pickup)
+```
+
+```{r}
+#Data cleaning
+#Sort the raw dataset by sid and DATE_DISPENSED
+library(dplyr)
+pickup1<-pickup%>%arrange(pickup$sid,as.Date(pickup$DATE_DISPENSED,format="%Y/%m/%d"))
+print(pickup1)
+```
+```{r}
+#Since we are only interested in the one year follow up period, we only need to keep the records within one year since the first pharmacy pick up date.
+#In order to fulfill the agenda above, first we need to find out the first pick up date for all sid(Individuals)
+library(dplyr)
+pickup_initial <- pickup1 %>% group_by(pickup1$sid) %>% filter(row_number()==1)
+pickup_initial <- pickup_initial[-c(4)]
+print(pickup_initial)
+```
+```{r}
+#Get the year of the first pickup date for each sid
+#Get the frequency of pickup_initial
+pickup_initial$year_start=format(as.Date(pickup_initial$DATE_DISPENSED, format="%Y/%m/%d"),"%Y")
+print(pickup_initial)
+pickup_initial_count<-count(pickup_initial,year_start)
+pickup_initial_count<-pickup_initial_count[-7,]
+print(pickup_initial_count)
+```
+
+```{r}
+#Add entire one year to the existing date column to obtain one-year periods.
+lt <- as.POSIXlt(as.Date(pickup_initial$DATE_DISPENSED,format="%Y/%m/%d"))
+library(lubridate)
+lt<-lt %m+% months(11)
+pickup_initial$date_disp_1YR_FU=as.Date(lt, format="%Y/%m/%d")
+print(pickup_initial)
+```
+
